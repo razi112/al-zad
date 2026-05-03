@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   getOrders,
   updateOrderStatus,
@@ -48,7 +48,39 @@ const StatusIcon: Record<OrderStatus, React.ElementType> = {
   cancelled: XCircle,
 };
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Notification sound (Web Audio API — no file needed) ─────────────────────
+function playNewOrderSound() {
+  try {
+    const ctx = new AudioContext();
+
+    const play = (freq: number, startTime: number, duration: number, gain: number) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, startTime);
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(gain, startTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const t = ctx.currentTime;
+    // Three ascending tones — pleasant "ding ding ding"
+    play(880, t,        0.18, 0.4);
+    play(1100, t + 0.2, 0.18, 0.4);
+    play(1320, t + 0.4, 0.28, 0.5);
+
+    // Clean up context after sound finishes
+    setTimeout(() => ctx.close(), 1200);
+  } catch {
+    // AudioContext not available (e.g. SSR or blocked) — fail silently
+  }
+}
+
+
 function timeAgo(iso: string): string {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
   if (diff < 60) return `${diff}s ago`;
@@ -305,9 +337,21 @@ function AdminPage() {
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
   const [tick, setTick] = useState(0); // forces timeAgo re-render
 
+  // Track new-order count to detect incoming orders
+  const prevNewCount = useRef<number | null>(null);
+
   const reload = useCallback(() => {
     setOrders(getOrders());
   }, []);
+
+  // Play sound when a new "new" order arrives
+  useEffect(() => {
+    const newCount = orders.filter((o) => o.status === "new").length;
+    if (prevNewCount.current !== null && newCount > prevNewCount.current) {
+      playNewOrderSound();
+    }
+    prevNewCount.current = newCount;
+  }, [orders]);
 
   useEffect(() => {
     if (!unlocked) return;
