@@ -1,10 +1,8 @@
-import { Outlet, createRootRoute, HeadContent, Scripts, Link, useRouterState } from "@tanstack/react-router";
+import { Outlet, createRootRoute, Link, useRouterState } from "@tanstack/react-router";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { BottomNav } from "@/components/BottomNav";
 import { Toaster } from "@/components/ui/sonner";
-
-import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
   return (
@@ -29,39 +27,9 @@ function NotFoundComponent() {
 }
 
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AL ZAD — Quality, not compromised | Flame-grilled chicken" },
-      { name: "description", content: "AL ZAD — modern flame kitchen serving slow-marinated, charcoal-grilled chicken, mandi, mezze and wraps. Quality, not compromised." },
-      { name: "author", content: "AL ZAD" },
-      { property: "og:title", content: "AL ZAD — Quality, not compromised" },
-      { property: "og:description", content: "Slow-marinated, charcoal-grilled chicken, mandi, mezze, wraps & burgers." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [{ rel: "stylesheet", href: appCss }],
-  }),
-  shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
 });
-
-function RootShell({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
-}
 
 function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
