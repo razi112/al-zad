@@ -65,13 +65,19 @@ export async function deleteOrder(id: string): Promise<void> {
 
 export function subscribeToOrders(cb: () => void): () => void {
   const channel: RealtimeChannel = supabase
-    .channel("orders-changes")
+    .channel("orders-realtime")
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "orders" },
-      () => cb()
+      (payload) => {
+        console.log("[Realtime] orders change:", payload.eventType, payload);
+        cb();
+      }
     )
-    .subscribe();
+    .subscribe((status, err) => {
+      if (err) console.error("[Realtime] subscription error:", err);
+      else console.log("[Realtime] subscription status:", status);
+    });
 
   return () => {
     supabase.removeChannel(channel);
