@@ -29,14 +29,14 @@ function ContactPage() {
       <header className="text-center max-w-2xl mx-auto">
         <div className="text-gold text-xs uppercase tracking-[0.3em] mb-3">Get in touch</div>
         <h1 className="font-display text-5xl md:text-6xl">Come hungry. Leave happy.</h1>
-        <p className="mt-5 text-muted-foreground">Reservations, catering, or just a craving — we're here.</p>
+        <p className="mt-5 text-muted-foreground">Reservations, just a craving — we're here.</p>
       </header>
 
       <div className="mt-16 grid lg:grid-cols-2 gap-10">
         <div className="space-y-6">
           {[
-            { Icon: MapPin, title: "Visit", lines: ["Al Olaya Street", "Riyadh, Saudi Arabia"] },
-            { Icon: Phone, title: "Call", lines: ["+966 50 000 0000", "Daily 11am – 1am"] },
+            { Icon: MapPin, title: "Visit", lines: ["Al Zad Restaurant", "Kulangara, Eranhimavu, Kerala"] },
+            { Icon: Phone, title: "Call", lines: ["+91 73068 94157", "Daily 11am – 1am"] },
             { Icon: Mail, title: "Email", lines: ["hello@alzad.co"] },
             { Icon: Clock, title: "Hours", lines: ["Mon–Sun · 11:00 – 01:00"] },
           ].map((c) => (
@@ -54,7 +54,7 @@ function ContactPage() {
           ))}
 
           <a
-            href="https://wa.me/966500000000"
+            href="https://wa.me/917306894157"
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-3 rounded-2xl border border-gold/40 bg-gold/5 hover:bg-gold/10 p-5 transition"
@@ -71,11 +71,20 @@ function ContactPage() {
           <div className="rounded-2xl overflow-hidden border border-border aspect-[16/10]">
             <iframe
               title="AL ZAD location"
-              src="https://www.openstreetmap.org/export/embed.html?bbox=46.65%2C24.68%2C46.72%2C24.72&layer=mapnik"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=76.0099844%2C11.2694331%2C76.0199844%2C11.2794331&layer=mapnik&marker=11.2744331%2C76.0149844"
               className="w-full h-full"
               loading="lazy"
             />
           </div>
+          <a
+            href="https://maps.app.goo.gl/vZs6DcfMYRiw6yj8A"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-center gap-2 rounded-xl border border-gold/40 bg-gold/5 hover:bg-gold/10 py-3 text-sm text-gold font-medium transition"
+          >
+            <MapPin className="h-4 w-4" />
+            View on Google Maps
+          </a>
         </div>
 
         <form onSubmit={submit} className="rounded-2xl border border-border bg-card p-8 space-y-5 self-start">

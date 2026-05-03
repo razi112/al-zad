@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 const links = [
   { to: "/", label: "Home" },
   { to: "/menu", label: "Menu" },
-  { to: "/offers", label: "Offers" },
   { to: "/gallery", label: "Gallery" },
   { to: "/about", label: "Our Story" },
   { to: "/contact", label: "Contact" },

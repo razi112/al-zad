@@ -1,72 +1,71 @@
-import chicken from "@/assets/dish-chicken.jpg";
-import shawarma from "@/assets/dish-shawarma.jpg";
-import mezze from "@/assets/dish-mezze.jpg";
-import mandi from "@/assets/dish-mandi.jpg";
-import wings from "@/assets/dish-wings.jpg";
-import burger from "@/assets/dish-burger.jpg";
+const alfahmMandiImg = "https://cdn.citymapia.com/kottayam/malabar-majlis/37916/Portfolio.jpg?biz=8363";
+const pepperAlfahmImg = "https://i.pinimg.com/736x/9f/c2/4c/9fc24c1a70a18a06069cd26b4992e298.jpg";
+const masalaShawaiImg = "https://fudbee.com/assets/img/items/1661433463qe9xSBcAoe.jpg";
+
+export type SizeVariant = {
+  label: string;
+  price: number;
+};
 
 export type MenuItem = {
   id: string;
   name: string;
   description: string;
-  price: number;
+  price: number; // base / starting price (used for display)
+  sizes?: SizeVariant[];
   image: string;
   category: "Signature" | "Wraps" | "Platters" | "Sides" | "Burgers";
   badge?: string;
 };
 
 export const menu: MenuItem[] = [
+  // ── Mandi items ──────────────────────────────────────────────────────────
   {
-    id: "flame-half",
-    name: "Flame-Roasted Half Chicken",
-    description: "Slow-marinated 24h, charcoal-grilled, served with saffron rice & grilled lemon.",
-    price: 42,
-    image: chicken,
-    category: "Signature",
+    id: "mandi-normal-alfahm",
+    name: "Normal Al Fahm Mandi",
+    description: "Classic charcoal-roasted Al Fahm chicken on fragrant smoked basmati rice.",
+    price: 180,
+    sizes: [
+      { label: "Qtr",  price: 180 },
+      { label: "Half", price: 360 },
+      { label: "3/4",  price: 540 },
+      { label: "Full", price: 710 },
+    ],
+    image: alfahmMandiImg,
+    category: "Platters",
     badge: "House Favorite",
   },
   {
-    id: "mandi-feast",
-    name: "Royal Chicken Mandi",
-    description: "Smoked basmati, tender drumsticks, toasted nuts, raisins & garlic sauce.",
-    price: 58,
-    image: mandi,
+    id: "mandi-masala-shawaii",
+    name: "Normal / Masala Shawaii Mandi",
+    description: "Tender Shawaii-style chicken with aromatic masala spices on saffron rice.",
+    price: 180,
+    sizes: [
+      { label: "Qtr",  price: 180 },
+      { label: "Half", price: 360 },
+      { label: "3/4",  price: 540 },
+      { label: "Full", price: 710 },
+    ],
+    image: masalaShawaiImg,
+    category: "Platters",
+  },
+  {
+    id: "mandi-pepper-alfahm",
+    name: "Pepper / Peri-Peri / Honey Al Fahm Mandi",
+    description: "Al Fahm chicken with your choice of bold pepper, fiery peri-peri or sweet honey glaze.",
+    price: 190,
+    sizes: [
+      { label: "Qtr",  price: 190 },
+      { label: "Half", price: 380 },
+      { label: "3/4",  price: 570 },
+      { label: "Full", price: 740 },
+    ],
+    image: pepperAlfahmImg,
     category: "Platters",
     badge: "Chef's Pick",
   },
-  {
-    id: "mezze-grand",
-    name: "Grand Mezze Platter",
-    description: "Hummus, mutabbal, kibbeh, olives, grilled chicken & warm pita.",
-    price: 65,
-    image: mezze,
-    category: "Platters",
-  },
-  {
-    id: "shawarma-royale",
-    name: "Shawarma Royale",
-    description: "Spit-roasted chicken, garlic toum, pickles, wrapped in saj.",
-    price: 22,
-    image: shawarma,
-    category: "Wraps",
-  },
-  {
-    id: "wings-fire",
-    name: "Fire & Honey Wings",
-    description: "Crispy wings glazed with chili-honey, sesame and scallions.",
-    price: 28,
-    image: wings,
-    category: "Sides",
-    badge: "Spicy",
-  },
-  {
-    id: "burger-zad",
-    name: "The AL ZAD Burger",
-    description: "Double grilled chicken, aged cheddar, brioche, golden fries.",
-    price: 32,
-    image: burger,
-    category: "Burgers",
-  },
+
+  // ── Other items ───────────────────────────────────────────────────────────
 ];
 
-export const categories = ["All", "Signature", "Platters", "Wraps", "Burgers", "Sides"] as const;
+export const categories = ["All", "Platters"] as const;

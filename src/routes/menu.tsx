@@ -78,9 +78,24 @@ function Card({ item }: { item: MenuItem }) {
       <div className="p-6 flex flex-col flex-1">
         <div className="flex items-baseline justify-between gap-4">
           <h3 className="font-display text-xl">{item.name}</h3>
-          <span className="text-gold font-semibold whitespace-nowrap">{item.price} SAR</span>
+          <span className="text-gold font-semibold whitespace-nowrap">
+            {item.sizes ? `from ₹${item.price}` : `₹${item.price}`}
+          </span>
         </div>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed flex-1">{item.description}</p>
+
+        {/* Size pricing table */}
+        {item.sizes && (
+          <div className="mt-4 grid grid-cols-4 gap-1.5">
+            {item.sizes.map((s) => (
+              <div key={s.label} className="rounded-lg border border-border/70 bg-background/40 p-2 text-center">
+                <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{s.label}</div>
+                <div className="text-xs font-semibold text-gold mt-0.5">₹{s.price}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
         <Button asChild variant="outlineGold" size="sm" className="mt-5 self-start">
           <Link to="/order"><Plus className="h-3.5 w-3.5" /> Add to order</Link>
         </Button>

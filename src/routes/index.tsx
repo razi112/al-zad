@@ -129,7 +129,7 @@ function Index() {
                 <div className="p-6">
                   <div className="flex items-baseline justify-between gap-4">
                     <h3 className="font-display text-xl">{item.name}</h3>
-                    <span className="text-gold font-semibold">{item.price} SAR</span>
+                    <span className="text-gold font-semibold">₹{item.price}</span>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-2">{item.description}</p>
                 </div>
@@ -177,7 +177,6 @@ function Index() {
             </p>
             <div className="mt-8 flex flex-wrap gap-4 justify-center">
               <Button asChild variant="gold" size="xl"><Link to="/order">Order Now</Link></Button>
-              <Button asChild variant="outlineGold" size="xl"><Link to="/offers">See Offers</Link></Button>
             </div>
           </div>
         </div>

@@ -39,7 +39,6 @@ export function Footer() {
           <h4 className="text-gold text-sm uppercase tracking-[0.25em] mb-5">Explore</h4>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li><Link to="/menu" className="hover:text-gold">Menu</Link></li>
-            <li><Link to="/offers" className="hover:text-gold">Offers</Link></li>
             <li><Link to="/gallery" className="hover:text-gold">Gallery</Link></li>
             <li><Link to="/about" className="hover:text-gold">Our Story</Link></li>
             <li><Link to="/order" className="hover:text-gold">Order Online</Link></li>
@@ -50,7 +49,7 @@ export function Footer() {
           <h4 className="text-gold text-sm uppercase tracking-[0.25em] mb-5">Visit</h4>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li className="flex items-start gap-2"><MapPin className="h-4 w-4 mt-0.5 text-gold" /> Al Olaya Street, Riyadh</li>
-            <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-gold" /> +966 50 000 0000</li>
+            <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-gold" /><a href="tel:+917306894157" className="hover:text-gold transition-colors">+91 73068 94157</a></li>
             <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-gold" /> hello@alzad.co</li>
           </ul>
         </div>
