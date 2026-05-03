@@ -48,6 +48,14 @@ export function Footer() {
             <li><Link to="/gallery" className="hover:text-gold">Gallery</Link></li>
             <li><Link to="/about" className="hover:text-gold">Our Story</Link></li>
             <li><Link to="/order" className="hover:text-gold">Order Online</Link></li>
+            <li>
+              <Link
+                to="/admin"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-gold/40 bg-gold/10 text-gold text-xs uppercase tracking-[0.2em] hover:bg-gold/20 transition-colors"
+              >
+                Admin
+              </Link>
+            </li>
           </ul>
         </div>
 

@@ -37,7 +37,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-const ADMIN_PIN = "2580"; // change this to your preferred PIN
+const ADMIN_PIN = "2026"; // change this to your preferred PIN
 
 // ── Status icon map ──────────────────────────────────────────────────────────
 const StatusIcon: Record<OrderStatus, React.ElementType> = {
