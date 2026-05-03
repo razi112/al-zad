@@ -21,22 +21,22 @@ function MenuPage() {
   const items = active === "All" ? menu : menu.filter((m) => m.category === active);
 
   return (
-    <div className="mx-auto max-w-7xl px-6 lg:px-10 py-20 lg:py-28">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-16 sm:py-20 lg:py-28">
       <header className="text-center max-w-3xl mx-auto">
-        <div className="text-gold text-xs uppercase tracking-[0.3em] mb-4">Our Menu</div>
-        <h1 className="font-display text-5xl md:text-6xl">Forged in flame.</h1>
-        <p className="mt-5 text-muted-foreground leading-relaxed">
+        <div className="text-gold text-xs uppercase tracking-[0.3em] mb-3 sm:mb-4">Our Menu</div>
+        <h1 className="font-display text-4xl sm:text-5xl md:text-6xl">Forged in flame.</h1>
+        <p className="mt-4 sm:mt-5 text-sm sm:text-base text-muted-foreground leading-relaxed">
           Every dish at AL ZAD is built around one belief — quality is non-negotiable.
           Browse our signatures and order what calls you.
         </p>
       </header>
 
-      <div className="mt-14 flex flex-wrap justify-center gap-3">
+      <div className="mt-10 sm:mt-14 flex flex-wrap justify-center gap-2 sm:gap-3">
         {categories.map((c) => (
           <button
             key={c}
             onClick={() => setActive(c)}
-            className={`px-5 py-2 rounded-full text-xs uppercase tracking-[0.2em] border transition-all ${
+            className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs uppercase tracking-[0.2em] border transition-all ${
               active === c
                 ? "bg-gradient-gold text-primary-foreground border-transparent shadow-gold"
                 : "border-border text-muted-foreground hover:text-gold hover:border-gold/60"
@@ -47,7 +47,7 @@ function MenuPage() {
         ))}
       </div>
 
-      <div className="mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="mt-10 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
         {items.map((item) => (
           <Card key={item.id} item={item} />
         ))}

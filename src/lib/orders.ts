@@ -51,6 +51,12 @@ export function updateOrderStatus(id: string, status: OrderStatus): void {
   window.dispatchEvent(new CustomEvent(EVENT_KEY));
 }
 
+export function deleteOrder(id: string): void {
+  const orders = getOrders().filter((o) => o.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+  window.dispatchEvent(new CustomEvent(EVENT_KEY));
+}
+
 export function subscribeToOrders(cb: () => void): () => void {
   // Same-tab updates via custom event
   window.addEventListener(EVENT_KEY, cb);

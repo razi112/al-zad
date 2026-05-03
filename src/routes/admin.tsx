@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import {
   getOrders,
   updateOrderStatus,
+  deleteOrder,
   subscribeToOrders,
   type Order,
   type OrderStatus,
@@ -26,6 +27,7 @@ import {
   XCircle,
   Bike,
   ChefHat,
+  Trash2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -127,6 +129,13 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: ()
     onStatusChange();
   };
 
+  const remove = () => {
+    if (window.confirm(`Delete order ${order.id}? This cannot be undone.`)) {
+      deleteOrder(order.id);
+      onStatusChange();
+    }
+  };
+
   const linePrice = (l: (typeof order.lines)[0]) =>
     (l.sizePrice ?? l.basePrice) * l.qty;
 
@@ -216,6 +225,13 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: ()
               <XCircle className="h-4 w-4" />
             </button>
           )}
+          <button
+            onClick={remove}
+            className="h-8 w-8 grid place-items-center rounded-lg border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition-colors"
+            title="Delete order"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
           {nextStatus && (
             <Button onClick={advance} variant="gold" size="sm" className="gap-1.5">
               Mark {STATUS_LABELS[nextStatus]}

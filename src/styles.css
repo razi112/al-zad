@@ -160,6 +160,16 @@
   .animate-flicker {
     animation: flicker 3s ease-in-out infinite;
   }
+  .animate-scroll-left {
+    animation: scrollLeft 30s linear infinite;
+  }
+  .animate-scroll-right {
+    animation: scrollRight 36s linear infinite;
+  }
+  .animate-scroll-left:hover,
+  .animate-scroll-right:hover {
+    animation-play-state: paused;
+  }
 }
 
 @keyframes fadeInUp {
@@ -169,4 +179,20 @@
 @keyframes flicker {
   0%, 100% { opacity: 1; filter: drop-shadow(0 0 24px oklch(0.82 0.16 82 / 0.5)); }
   50%      { opacity: 0.92; filter: drop-shadow(0 0 36px oklch(0.72 0.19 45 / 0.6)); }
+}
+@keyframes lightboxBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes lightboxPopIn {
+  from { opacity: 0; transform: scale(0.88) translateY(24px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes scrollLeft {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes scrollRight {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
 }

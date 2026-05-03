@@ -117,15 +117,15 @@ function OrderPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 lg:px-10 py-20 lg:py-24">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-16 sm:py-20 lg:py-24">
       <header className="text-center max-w-2xl mx-auto">
         <div className="text-gold text-xs uppercase tracking-[0.3em] mb-3">Order Online</div>
-        <h1 className="font-display text-5xl">Build your feast.</h1>
+        <h1 className="font-display text-4xl sm:text-5xl">Build your feast.</h1>
       </header>
 
-      <div className="mt-14 grid lg:grid-cols-3 gap-10">
+      <div className="mt-10 sm:mt-14 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
         {/* Items */}
-        <div className="lg:col-span-2 grid sm:grid-cols-2 gap-5">
+        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
           {menu.map((m) => {
             const activeSizeLabel = selectedSize[m.id];
             const activeSize = m.sizes?.find((s) => s.label === activeSizeLabel);
@@ -135,25 +135,25 @@ function OrderPage() {
             return (
               <div key={m.id} className="rounded-2xl border border-border bg-card overflow-hidden flex flex-col">
                 <div className="flex">
-                  <img src={m.image} alt={m.name} loading="lazy" className="w-32 h-full object-cover" />
-                  <div className="p-4 flex flex-col flex-1">
-                    <h3 className="font-display text-lg leading-tight">{m.name}</h3>
+                  <img src={m.image} alt={m.name} loading="lazy" className="w-28 sm:w-32 h-full object-cover shrink-0" />
+                  <div className="p-3 sm:p-4 flex flex-col flex-1 min-w-0">
+                    <h3 className="font-display text-base sm:text-lg leading-tight">{m.name}</h3>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>
-                    <div className="mt-auto pt-3 flex items-center justify-between">
-                      <span className="text-gold font-semibold">₹{displayPrice}</span>
+                    <div className="mt-auto pt-3 flex items-center justify-between gap-2">
+                      <span className="text-gold font-semibold text-sm sm:text-base">₹{displayPrice}</span>
                       {cart[activeKey] ? (
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => sub(activeKey)} className="h-8 w-8 grid place-items-center rounded-full border border-border hover:border-gold hover:text-gold">
-                            <Minus className="h-3.5 w-3.5" />
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <button onClick={() => sub(activeKey)} className="h-7 w-7 sm:h-8 sm:w-8 grid place-items-center rounded-full border border-border hover:border-gold hover:text-gold">
+                            <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </button>
-                          <span className="w-6 text-center">{cart[activeKey]}</span>
-                          <button onClick={() => add(m.id, activeSizeLabel)} className="h-8 w-8 grid place-items-center rounded-full bg-gradient-gold text-primary-foreground">
-                            <Plus className="h-3.5 w-3.5" />
+                          <span className="w-5 text-center text-sm">{cart[activeKey]}</span>
+                          <button onClick={() => add(m.id, activeSizeLabel)} className="h-7 w-7 sm:h-8 sm:w-8 grid place-items-center rounded-full bg-gradient-gold text-primary-foreground">
+                            <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </button>
                         </div>
                       ) : (
-                        <Button onClick={() => add(m.id, activeSizeLabel)} variant="outlineGold" size="sm">
-                          <Plus className="h-3.5 w-3.5" /> Add
+                        <Button onClick={() => add(m.id, activeSizeLabel)} variant="outlineGold" size="sm" className="text-xs px-2.5 sm:px-3">
+                          <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Add
                         </Button>
                       )}
                     </div>
@@ -162,12 +162,12 @@ function OrderPage() {
 
                 {/* Size selector */}
                 {m.sizes && (
-                  <div className="px-4 pb-4 pt-2 flex gap-2 flex-wrap border-t border-border/50 mt-1">
+                  <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 flex gap-1.5 sm:gap-2 flex-wrap border-t border-border/50 mt-1">
                     {m.sizes.map((s) => (
                       <button
                         key={s.label}
                         onClick={() => setSelectedSize((prev) => ({ ...prev, [m.id]: s.label }))}
-                        className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                        className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
                           activeSizeLabel === s.label
                             ? "border-gold bg-gold/10 text-gold"
                             : "border-border text-muted-foreground hover:border-gold/50"
@@ -184,25 +184,25 @@ function OrderPage() {
         </div>
 
         {/* Cart */}
-        <aside className="lg:sticky lg:top-28 self-start rounded-2xl border border-border bg-card/70 p-6">
-          <h2 className="font-display text-2xl flex items-center gap-2">
+        <aside className="lg:sticky lg:top-28 self-start rounded-2xl border border-border bg-card/70 p-5 sm:p-6">
+          <h2 className="font-display text-xl sm:text-2xl flex items-center gap-2">
             <ShoppingBag className="h-5 w-5 text-gold" /> Your Order
           </h2>
 
           {lines.length === 0 ? (
-            <p className="mt-6 text-sm text-muted-foreground">Your cart is empty. Add a dish to begin.</p>
+            <p className="mt-5 sm:mt-6 text-sm text-muted-foreground">Your cart is empty. Add a dish to begin.</p>
           ) : (
-            <ul className="mt-5 space-y-3">
+            <ul className="mt-4 sm:mt-5 space-y-3">
               {lines.map((l) => (
                 <li key={l.key} className="flex items-center justify-between gap-3 text-sm">
-                  <div className="flex-1">
-                    <div className="font-medium">{l.item.name}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{l.item.name}</div>
                     <div className="text-xs text-muted-foreground">
                       {l.size ? `${l.size.label} · ` : ""}{l.qty} × ₹{l.size?.price ?? l.item.price}
                     </div>
                   </div>
-                  <span className="text-gold font-semibold">₹{l.qty * (l.size?.price ?? l.item.price)}</span>
-                  <button onClick={() => remove(l.key)} className="text-muted-foreground hover:text-destructive">
+                  <span className="text-gold font-semibold whitespace-nowrap">₹{l.qty * (l.size?.price ?? l.item.price)}</span>
+                  <button onClick={() => remove(l.key)} className="text-muted-foreground hover:text-destructive shrink-0">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </li>
@@ -210,7 +210,7 @@ function OrderPage() {
             </ul>
           )}
 
-          <div className="gold-divider my-6" />
+          <div className="gold-divider my-5 sm:my-6" />
 
           <form onSubmit={placeOrder} className="space-y-4">
             <div>
@@ -248,7 +248,7 @@ function OrderPage() {
             <Button type="submit" variant="gold" size="lg" className="w-full mt-2">Place Order</Button>
           </form>
 
-          <div className="gold-divider my-6" />
+          <div className="gold-divider my-5 sm:my-6" />
 
           <div className="text-center space-y-2">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Prefer to call?</p>
