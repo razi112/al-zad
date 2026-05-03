@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { menu, type MenuItem, type SizeVariant } from "@/data/menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, Minus, Trash2, ShoppingBag, CheckCircle2, Phone } from "lucide-react";
+import { Plus, Minus, Trash2, ShoppingBag, CheckCircle2, Phone, MapPin, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { saveOrder, generateOrderId, buildOrderLines } from "@/lib/orders";
 
@@ -20,6 +20,32 @@ export const Route = createFileRoute("/order")({
   component: OrderPage,
 });
 
+// ── Restaurant coordinates (Kulangara, Eranhimavu, Kerala) ───────────────────
+const RESTAURANT_LAT = 11.2744331;
+const RESTAURANT_LNG = 76.0149844;
+const MAX_DELIVERY_KM = 4;
+
+// Haversine distance in km
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+type LocationState =
+  | { status: "idle" }
+  | { status: "checking" }
+  | { status: "ok"; distanceKm: number }
+  | { status: "too_far"; distanceKm: number }
+  | { status: "denied" }
+  | { status: "error"; message: string };
+
 // Cart key = "itemId::sizeLabel" (or just "itemId" for items without sizes)
 type CartLine = { item: MenuItem; size?: SizeVariant; qty: number; key: string };
 
@@ -29,7 +55,6 @@ function cartKey(id: string, sizeLabel?: string) {
 
 function OrderPage() {
   const [cart, setCart] = useState<Record<string, number>>({});
-  // Track selected size per item card
   const [selectedSize, setSelectedSize] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       menu.filter((m) => m.sizes).map((m) => [m.id, m.sizes![0].label])
@@ -37,11 +62,53 @@ function OrderPage() {
   );
   const [mode, setMode] = useState<"delivery" | "pickup">("delivery");
   const [placed, setPlaced] = useState(false);
+  const [location, setLocation] = useState<LocationState>({ status: "idle" });
+  const [submitting, setSubmitting] = useState(false);
 
-  // Form field refs for reading values on submit
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const addrRef = useRef<HTMLInputElement>(null);
+
+  // Auto-check location when delivery mode is selected
+  useEffect(() => {
+    if (mode === "delivery") {
+      checkLocation();
+    } else {
+      setLocation({ status: "idle" });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  function checkLocation() {
+    if (!navigator.geolocation) {
+      setLocation({ status: "error", message: "Geolocation is not supported by your browser." });
+      return;
+    }
+    setLocation({ status: "checking" });
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const dist = haversineKm(
+          pos.coords.latitude,
+          pos.coords.longitude,
+          RESTAURANT_LAT,
+          RESTAURANT_LNG
+        );
+        if (dist <= MAX_DELIVERY_KM) {
+          setLocation({ status: "ok", distanceKm: dist });
+        } else {
+          setLocation({ status: "too_far", distanceKm: dist });
+        }
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          setLocation({ status: "denied" });
+        } else {
+          setLocation({ status: "error", message: err.message });
+        }
+      },
+      { timeout: 10000, maximumAge: 60000 }
+    );
+  }
 
   const lines: CartLine[] = useMemo(() => {
     return Object.entries(cart).map(([key, qty]) => {
@@ -75,12 +142,33 @@ function OrderPage() {
       return n;
     });
 
+  // Delivery is blocked if location check failed or is too far
+  const deliveryBlocked =
+    mode === "delivery" &&
+    (location.status === "too_far" ||
+      location.status === "denied" ||
+      location.status === "error");
+
   const placeOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (lines.length === 0) {
       toast.error("Your cart is empty");
       return;
     }
+    if (deliveryBlocked) {
+      toast.error("Delivery is not available at your location.");
+      return;
+    }
+    // If still checking, wait
+    if (mode === "delivery" && location.status === "checking") {
+      toast.error("Still checking your location, please wait a moment.");
+      return;
+    }
+
+    setSubmitting(true);
+    const distanceKm =
+      location.status === "ok" ? parseFloat(location.distanceKm.toFixed(2)) : null;
+
     await saveOrder({
       id: generateOrderId(),
       placed_at: new Date().toISOString(),
@@ -89,11 +177,13 @@ function OrderPage() {
       name: nameRef.current?.value ?? "",
       phone: phoneRef.current?.value ?? "",
       address: mode === "delivery" ? (addrRef.current?.value ?? "") : undefined,
+      distance_km: distanceKm,
       lines: buildOrderLines(cart, menu),
       subtotal,
       fee,
       total,
     });
+    setSubmitting(false);
     setPlaced(true);
     toast.success("Order placed! We'll text you when it's ready.");
   };
@@ -212,6 +302,7 @@ function OrderPage() {
           <div className="gold-divider my-5 sm:my-6" />
 
           <form onSubmit={placeOrder} className="space-y-4">
+            {/* Delivery method */}
             <div>
               <Label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Method</Label>
               <RadioGroup value={mode} onValueChange={(v) => setMode(v as "delivery" | "pickup")} className="mt-3 grid grid-cols-2 gap-2">
@@ -222,6 +313,12 @@ function OrderPage() {
                 ))}
               </RadioGroup>
             </div>
+
+            {/* Location status banner — only for delivery */}
+            {mode === "delivery" && (
+              <LocationBanner location={location} onRetry={checkLocation} />
+            )}
+
             <div>
               <Label htmlFor="name" className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Name</Label>
               <Input id="name" required className="mt-2" placeholder="Your name" ref={nameRef} />
@@ -244,7 +341,21 @@ function OrderPage() {
               <Row label="Total" value={`₹${total}`} bold />
             </div>
 
-            <Button type="submit" variant="gold" size="lg" className="w-full mt-2">Place Order</Button>
+            <Button
+              type="submit"
+              variant="gold"
+              size="lg"
+              className="w-full mt-2"
+              disabled={deliveryBlocked || submitting || location.status === "checking"}
+            >
+              {submitting ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Placing order…</>
+              ) : location.status === "checking" ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Checking location…</>
+              ) : (
+                "Place Order"
+              )}
+            </Button>
           </form>
 
           <div className="gold-divider my-5 sm:my-6" />
@@ -272,6 +383,74 @@ function OrderPage() {
           </div>
         </aside>
       </div>
+    </div>
+  );
+}
+
+// ── Location banner ───────────────────────────────────────────────────────────
+function LocationBanner({ location, onRetry }: { location: LocationState; onRetry: () => void }) {
+  if (location.status === "idle") return null;
+
+  if (location.status === "checking") {
+    return (
+      <div className="flex items-center gap-2.5 rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin shrink-0 text-gold" />
+        Checking your location…
+      </div>
+    );
+  }
+
+  if (location.status === "ok") {
+    return (
+      <div className="flex items-center gap-2.5 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+        <MapPin className="h-4 w-4 shrink-0" />
+        You're {location.distanceKm.toFixed(1)} km away — delivery available ✓
+      </div>
+    );
+  }
+
+  if (location.status === "too_far") {
+    return (
+      <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm space-y-1.5">
+        <div className="flex items-center gap-2 text-destructive font-medium">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          Outside delivery zone
+        </div>
+        <p className="text-muted-foreground text-xs leading-relaxed">
+          You're {location.distanceKm.toFixed(1)} km away. We only deliver within {MAX_DELIVERY_KM} km of the restaurant.
+          Switch to <strong>Pickup</strong> or call us.
+        </p>
+      </div>
+    );
+  }
+
+  if (location.status === "denied") {
+    return (
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm space-y-1.5">
+        <div className="flex items-center gap-2 text-amber-400 font-medium">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          Location access denied
+        </div>
+        <p className="text-muted-foreground text-xs leading-relaxed">
+          We need your location to confirm delivery is available in your area.
+          Please allow location access in your browser and{" "}
+          <button onClick={onRetry} className="text-gold underline underline-offset-2">try again</button>.
+        </p>
+      </div>
+    );
+  }
+
+  // generic error
+  return (
+    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm space-y-1.5">
+      <div className="flex items-center gap-2 text-amber-400 font-medium">
+        <AlertTriangle className="h-4 w-4 shrink-0" />
+        Couldn't detect location
+      </div>
+      <p className="text-muted-foreground text-xs">
+        {(location as { status: "error"; message: string }).message}{" "}
+        <button onClick={onRetry} className="text-gold underline underline-offset-2">Retry</button>
+      </p>
     </div>
   );
 }

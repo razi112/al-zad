@@ -15,12 +15,13 @@ export type OrderLine = {
 
 export type Order = {
   id: string;
-  placed_at: string; // ISO timestamp — matches Supabase column name
+  placed_at: string;
   status: OrderStatus;
   mode: "delivery" | "pickup";
   name: string;
   phone: string;
   address?: string;
+  distance_km?: number | null;
   lines: OrderLine[];
   subtotal: number;
   fee: number;

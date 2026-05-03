@@ -28,6 +28,8 @@ import {
   Bike,
   ChefHat,
   Trash2,
+  BellRing,
+  X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -48,7 +50,7 @@ const StatusIcon: Record<OrderStatus, React.ElementType> = {
   cancelled: XCircle,
 };
 
-// ── Notification sound (Web Audio API) ───────────────────────────────────────
+// ── Notification sound ────────────────────────────────────────────────────────
 function playNewOrderSound() {
   try {
     const ctx = new AudioContext();
@@ -70,9 +72,99 @@ function playNewOrderSound() {
     play(1100, t + 0.2,  0.18, 0.4);
     play(1320, t + 0.4,  0.28, 0.5);
     setTimeout(() => ctx.close(), 1200);
-  } catch {
-    // fail silently
+  } catch { /* fail silently */ }
+}
+
+// ── Browser push notification ─────────────────────────────────────────────────
+async function sendBrowserNotification(order: Order) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "default") {
+    await Notification.requestPermission();
   }
+  if (Notification.permission === "granted") {
+    new Notification("🔥 New Order — AL ZAD", {
+      body: `${order.name} · ₹${order.total} · ${order.mode === "delivery" ? "Delivery" : "Pickup"}`,
+      icon: "/favicon.ico",
+      tag: order.id, // prevents duplicate notifications for same order
+    });
+  }
+}
+
+// ── In-app notification type ──────────────────────────────────────────────────
+type InAppNotif = {
+  id: string;
+  order: Order;
+  visible: boolean;
+};
+
+// ── In-app notification banner ────────────────────────────────────────────────
+function NewOrderBanner({ notif, onDismiss }: { notif: InAppNotif; onDismiss: (id: string) => void }) {
+  const { order } = notif;
+
+  // Auto-dismiss after 8 seconds
+  useEffect(() => {
+    const t = setTimeout(() => onDismiss(notif.id), 8000);
+    return () => clearTimeout(t);
+  }, [notif.id, onDismiss]);
+
+  return (
+    <div
+      className={`
+        flex items-start gap-3 w-full max-w-sm rounded-2xl border border-gold/40
+        bg-card shadow-elev px-4 py-4 transition-all duration-500
+        ${notif.visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-3 pointer-events-none"}
+      `}
+    >
+      {/* Icon */}
+      <div className="h-10 w-10 shrink-0 rounded-xl bg-gold/10 border border-gold/30 grid place-items-center">
+        <BellRing className="h-5 w-5 text-gold animate-bounce" />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">New Order</span>
+          <span className="text-[10px] text-muted-foreground">{new Date(order.placed_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</span>
+        </div>
+        <div className="mt-1 font-semibold text-sm text-foreground truncate">{order.name}</div>
+        <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+          <span className="text-gold font-semibold">₹{order.total}</span>
+          <span>·</span>
+          <span className="flex items-center gap-1">
+            {order.mode === "delivery"
+              ? <><Bike className="h-3 w-3" /> Delivery</>
+              : <><Package className="h-3 w-3" /> Pickup</>}
+          </span>
+          <span>·</span>
+          <span>{order.lines.length} item{order.lines.length > 1 ? "s" : ""}</span>
+        </div>
+        {/* Progress bar */}
+        <div className="mt-2.5 h-0.5 w-full rounded-full bg-border overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-gold/60 to-gold animate-[shrink_8s_linear_forwards]" />
+        </div>
+      </div>
+
+      {/* Dismiss */}
+      <button
+        onClick={() => onDismiss(notif.id)}
+        className="shrink-0 h-6 w-6 grid place-items-center rounded-full text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+// ── Notification stack (top-right) ────────────────────────────────────────────
+function NotificationStack({ notifs, onDismiss }: { notifs: InAppNotif[]; onDismiss: (id: string) => void }) {
+  if (notifs.length === 0) return null;
+  return (
+    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 items-end">
+      {notifs.map((n) => (
+        <NewOrderBanner key={n.id} notif={n} onDismiss={onDismiss} />
+      ))}
+    </div>
+  );
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -201,7 +293,12 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: ()
         {order.address && (
           <div className="flex items-start gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-gold" />
-            {order.address}
+            <span>
+              {order.address}
+              {order.distance_km != null && (
+                <span className="ml-2 text-xs text-gold/70">({order.distance_km.toFixed(1)} km)</span>
+              )}
+            </span>
           </div>
         )}
       </div>
@@ -272,11 +369,11 @@ function StatsBar({ orders }: { orders: Order[] }) {
     .reduce((s, o) => s + o.total, 0);
 
   const stats = [
-    { label: "New",            value: counts.new ?? 0,       color: "text-blue-400" },
-    { label: "Preparing",      value: counts.preparing ?? 0, color: "text-amber-400" },
-    { label: "Ready",          value: counts.ready ?? 0,     color: "text-green-400" },
-    { label: "Delivered",      value: counts.delivered ?? 0, color: "text-muted-foreground" },
-    { label: "Today's Revenue",value: `₹${todayRevenue}`,    color: "text-gold" },
+    { label: "New",             value: counts.new ?? 0,       color: "text-blue-400" },
+    { label: "Preparing",       value: counts.preparing ?? 0, color: "text-amber-400" },
+    { label: "Ready",           value: counts.ready ?? 0,     color: "text-green-400" },
+    { label: "Delivered",       value: counts.delivered ?? 0, color: "text-muted-foreground" },
+    { label: "Today's Revenue", value: `₹${todayRevenue}`,    color: "text-gold" },
   ];
 
   return (
@@ -307,24 +404,45 @@ function AdminPage() {
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
   const [loading, setLoading] = useState(false);
   const [tick, setTick] = useState(0);
+  const [notifs, setNotifs] = useState<InAppNotif[]>([]);
 
-  const prevNewCount = useRef<number | null>(null);
+  // Track known order IDs to detect genuinely new ones
+  const knownIds = useRef<Set<string>>(new Set());
+  const isFirstLoad = useRef(true);
+
+  const dismissNotif = useCallback((id: string) => {
+    setNotifs((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, visible: false } : n))
+    );
+    // Remove from DOM after fade-out
+    setTimeout(() => setNotifs((prev) => prev.filter((n) => n.id !== id)), 600);
+  }, []);
 
   const reload = useCallback(async () => {
     setLoading(true);
     const data = await getOrders();
+
+    if (isFirstLoad.current) {
+      // Seed known IDs on first load — don't notify for existing orders
+      data.forEach((o) => knownIds.current.add(o.id));
+      isFirstLoad.current = false;
+    } else {
+      // Find orders we haven't seen before with status "new"
+      const incoming = data.filter(
+        (o) => o.status === "new" && !knownIds.current.has(o.id)
+      );
+      incoming.forEach((o) => {
+        knownIds.current.add(o.id);
+        playNewOrderSound();
+        sendBrowserNotification(o);
+        const notifId = `notif-${o.id}`;
+        setNotifs((prev) => [...prev, { id: notifId, order: o, visible: true }]);
+      });
+    }
+
     setOrders(data);
     setLoading(false);
   }, []);
-
-  // Play sound when new orders arrive
-  useEffect(() => {
-    const newCount = orders.filter((o) => o.status === "new").length;
-    if (prevNewCount.current !== null && newCount > prevNewCount.current) {
-      playNewOrderSound();
-    }
-    prevNewCount.current = newCount;
-  }, [orders]);
 
   useEffect(() => {
     if (!unlocked) return;
@@ -337,6 +455,13 @@ function AdminPage() {
     };
   }, [unlocked, reload]);
 
+  // Request browser notification permission when admin unlocks
+  useEffect(() => {
+    if (unlocked && "Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, [unlocked]);
+
   const unlock = () => {
     sessionStorage.setItem("alzad_admin", "1");
     setUnlocked(true);
@@ -345,6 +470,8 @@ function AdminPage() {
   const logout = () => {
     sessionStorage.removeItem("alzad_admin");
     setUnlocked(false);
+    isFirstLoad.current = true;
+    knownIds.current.clear();
   };
 
   if (!unlocked) return <PinGate onUnlock={unlock} />;
@@ -353,75 +480,80 @@ function AdminPage() {
   const activeCount = orders.filter((o) => o.status === "new" || o.status === "preparing").length;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 lg:px-10 py-8 lg:py-12">
-      {/* Top bar */}
-      <div className="flex items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="font-display text-3xl lg:text-4xl">Kitchen Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {loading
-              ? "Loading orders…"
-              : activeCount > 0
-              ? `${activeCount} active order${activeCount > 1 ? "s" : ""} in progress`
-              : "No active orders right now"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={reload}
-            className={`h-9 w-9 grid place-items-center rounded-lg border border-border text-muted-foreground hover:text-gold hover:border-gold/50 transition-colors ${loading ? "animate-spin" : ""}`}
-            title="Refresh"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </button>
-          <button
-            onClick={logout}
-            className="h-9 w-9 grid place-items-center rounded-lg border border-border text-muted-foreground hover:text-destructive hover:border-destructive/50 transition-colors"
-            title="Log out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
+    <>
+      {/* Notification stack */}
+      <NotificationStack notifs={notifs} onDismiss={dismissNotif} />
 
-      <StatsBar orders={orders} />
-
-      {/* Filter tabs */}
-      <div className="mt-8 flex flex-wrap gap-2">
-        {STATUS_FILTERS.map((f) => {
-          const count = f.value === "all" ? orders.length : orders.filter((o) => o.status === f.value).length;
-          return (
+      <div className="mx-auto max-w-7xl px-4 lg:px-10 py-8 lg:py-12">
+        {/* Top bar */}
+        <div className="flex items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="font-display text-3xl lg:text-4xl">Kitchen Dashboard</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {loading
+                ? "Loading orders…"
+                : activeCount > 0
+                ? `${activeCount} active order${activeCount > 1 ? "s" : ""} in progress`
+                : "No active orders right now"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
             <button
-              key={f.value}
-              onClick={() => setFilter(f.value)}
-              className={`px-4 py-1.5 rounded-full text-xs uppercase tracking-[0.18em] border transition-all ${
-                filter === f.value
-                  ? "bg-gradient-gold text-primary-foreground border-transparent shadow-gold"
-                  : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"
-              }`}
+              onClick={reload}
+              className={`h-9 w-9 grid place-items-center rounded-lg border border-border text-muted-foreground hover:text-gold hover:border-gold/50 transition-colors ${loading ? "animate-spin" : ""}`}
+              title="Refresh"
             >
-              {f.label}
-              {count > 0 && <span className="ml-1.5 opacity-70">({count})</span>}
+              <RefreshCw className="h-4 w-4" />
             </button>
-          );
-        })}
-      </div>
+            <button
+              onClick={logout}
+              className="h-9 w-9 grid place-items-center rounded-lg border border-border text-muted-foreground hover:text-destructive hover:border-destructive/50 transition-colors"
+              title="Log out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
 
-      {/* Orders grid */}
-      <div className="mt-6" data-tick={tick}>
-        {filtered.length === 0 ? (
-          <div className="text-center py-24 text-muted-foreground">
-            <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-30" />
-            <p className="text-sm">{loading ? "Loading…" : "No orders here yet."}</p>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((order) => (
-              <OrderCard key={order.id} order={order} onStatusChange={reload} />
-            ))}
-          </div>
-        )}
+        <StatsBar orders={orders} />
+
+        {/* Filter tabs */}
+        <div className="mt-8 flex flex-wrap gap-2">
+          {STATUS_FILTERS.map((f) => {
+            const count = f.value === "all" ? orders.length : orders.filter((o) => o.status === f.value).length;
+            return (
+              <button
+                key={f.value}
+                onClick={() => setFilter(f.value)}
+                className={`px-4 py-1.5 rounded-full text-xs uppercase tracking-[0.18em] border transition-all ${
+                  filter === f.value
+                    ? "bg-gradient-gold text-primary-foreground border-transparent shadow-gold"
+                    : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"
+                }`}
+              >
+                {f.label}
+                {count > 0 && <span className="ml-1.5 opacity-70">({count})</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Orders grid */}
+        <div className="mt-6" data-tick={tick}>
+          {filtered.length === 0 ? (
+            <div className="text-center py-24 text-muted-foreground">
+              <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-30" />
+              <p className="text-sm">{loading ? "Loading…" : "No orders here yet."}</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filtered.map((order) => (
+                <OrderCard key={order.id} order={order} onStatusChange={reload} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
