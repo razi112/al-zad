@@ -37,9 +37,9 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-const ADMIN_PIN = "2026"; // change this to your preferred PIN
+const ADMIN_PIN = "2026";
 
-// ── Status icon map ──────────────────────────────────────────────────────────
+// ── Status icon map ───────────────────────────────────────────────────────────
 const StatusIcon: Record<OrderStatus, React.ElementType> = {
   new: ShoppingBag,
   preparing: ChefHat,
@@ -48,11 +48,10 @@ const StatusIcon: Record<OrderStatus, React.ElementType> = {
   cancelled: XCircle,
 };
 
-// ── Notification sound (Web Audio API — no file needed) ─────────────────────
+// ── Notification sound (Web Audio API) ───────────────────────────────────────
 function playNewOrderSound() {
   try {
     const ctx = new AudioContext();
-
     const play = (freq: number, startTime: number, duration: number, gain: number) => {
       const osc = ctx.createOscillator();
       const gainNode = ctx.createGain();
@@ -66,21 +65,17 @@ function playNewOrderSound() {
       osc.start(startTime);
       osc.stop(startTime + duration);
     };
-
     const t = ctx.currentTime;
-    // Three ascending tones — pleasant "ding ding ding"
-    play(880, t,        0.18, 0.4);
-    play(1100, t + 0.2, 0.18, 0.4);
-    play(1320, t + 0.4, 0.28, 0.5);
-
-    // Clean up context after sound finishes
+    play(880,  t,        0.18, 0.4);
+    play(1100, t + 0.2,  0.18, 0.4);
+    play(1320, t + 0.4,  0.28, 0.5);
     setTimeout(() => ctx.close(), 1200);
   } catch {
-    // AudioContext not available (e.g. SSR or blocked) — fail silently
+    // fail silently
   }
 }
 
-
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function timeAgo(iso: string): string {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
   if (diff < 60) return `${diff}s ago`;
@@ -89,13 +84,10 @@ function timeAgo(iso: string): string {
 }
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 }
 
-// ── PIN gate ─────────────────────────────────────────────────────────────────
+// ── PIN gate ──────────────────────────────────────────────────────────────────
 function PinGate({ onUnlock }: { onUnlock: () => void }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
@@ -132,9 +124,7 @@ function PinGate({ onUnlock }: { onUnlock: () => void }) {
             className={`text-center text-2xl tracking-[0.5em] h-14 ${error ? "border-destructive" : ""}`}
             autoFocus
           />
-          {error && (
-            <p className="text-center text-sm text-destructive">Incorrect PIN</p>
-          )}
+          {error && <p className="text-center text-sm text-destructive">Incorrect PIN</p>}
           <Button type="submit" variant="gold" size="lg" className="w-full">
             Unlock Dashboard
           </Button>
@@ -144,32 +134,31 @@ function PinGate({ onUnlock }: { onUnlock: () => void }) {
   );
 }
 
-// ── Order card ───────────────────────────────────────────────────────────────
+// ── Order card ────────────────────────────────────────────────────────────────
 function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: () => void }) {
   const Icon = StatusIcon[order.status];
   const nextStatus = STATUS_NEXT[order.status];
 
-  const advance = () => {
+  const advance = async () => {
     if (nextStatus) {
-      updateOrderStatus(order.id, nextStatus);
+      await updateOrderStatus(order.id, nextStatus);
       onStatusChange();
     }
   };
 
-  const cancel = () => {
-    updateOrderStatus(order.id, "cancelled");
+  const cancel = async () => {
+    await updateOrderStatus(order.id, "cancelled");
     onStatusChange();
   };
 
-  const remove = () => {
+  const remove = async () => {
     if (window.confirm(`Delete order ${order.id}? This cannot be undone.`)) {
-      deleteOrder(order.id);
+      await deleteOrder(order.id);
       onStatusChange();
     }
   };
 
-  const linePrice = (l: (typeof order.lines)[0]) =>
-    (l.sizePrice ?? l.basePrice) * l.qty;
+  const linePrice = (l: (typeof order.lines)[0]) => (l.sizePrice ?? l.basePrice) * l.qty;
 
   return (
     <article className="rounded-2xl border border-border bg-card overflow-hidden">
@@ -183,13 +172,11 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: ()
             <div className="font-semibold text-sm">{order.id}</div>
             <div className="text-xs text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {formatTime(order.placedAt)} · {timeAgo(order.placedAt)}
+              {formatTime(order.placed_at)} · {timeAgo(order.placed_at)}
             </div>
           </div>
         </div>
-        <span
-          className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-[0.15em] font-semibold border ${STATUS_COLORS[order.status]}`}
-        >
+        <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-[0.15em] font-semibold border ${STATUS_COLORS[order.status]}`}>
           {STATUS_LABELS[order.status]}
         </span>
       </div>
@@ -207,10 +194,7 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: ()
             )}
           </span>
         </div>
-        <a
-          href={`tel:${order.phone}`}
-          className="flex items-center gap-2 text-sm text-gold hover:underline"
-        >
+        <a href={`tel:${order.phone}`} className="flex items-center gap-2 text-sm text-gold hover:underline">
           <Phone className="h-4 w-4 shrink-0" />
           {order.phone}
         </a>
@@ -276,75 +260,64 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: ()
   );
 }
 
-// ── Stats bar ────────────────────────────────────────────────────────────────
+// ── Stats bar ─────────────────────────────────────────────────────────────────
 function StatsBar({ orders }: { orders: Order[] }) {
   const counts = orders.reduce(
-    (acc, o) => {
-      acc[o.status] = (acc[o.status] ?? 0) + 1;
-      return acc;
-    },
+    (acc, o) => { acc[o.status] = (acc[o.status] ?? 0) + 1; return acc; },
     {} as Record<OrderStatus, number>
   );
 
   const todayRevenue = orders
-    .filter(
-      (o) =>
-        o.status !== "cancelled" &&
-        new Date(o.placedAt).toDateString() === new Date().toDateString()
-    )
+    .filter((o) => o.status !== "cancelled" && new Date(o.placed_at).toDateString() === new Date().toDateString())
     .reduce((s, o) => s + o.total, 0);
 
   const stats = [
-    { label: "New", value: counts.new ?? 0, color: "text-blue-400" },
-    { label: "Preparing", value: counts.preparing ?? 0, color: "text-amber-400" },
-    { label: "Ready", value: counts.ready ?? 0, color: "text-green-400" },
-    { label: "Delivered", value: counts.delivered ?? 0, color: "text-muted-foreground" },
-    { label: "Today's Revenue", value: `₹${todayRevenue}`, color: "text-gold" },
+    { label: "New",            value: counts.new ?? 0,       color: "text-blue-400" },
+    { label: "Preparing",      value: counts.preparing ?? 0, color: "text-amber-400" },
+    { label: "Ready",          value: counts.ready ?? 0,     color: "text-green-400" },
+    { label: "Delivered",      value: counts.delivered ?? 0, color: "text-muted-foreground" },
+    { label: "Today's Revenue",value: `₹${todayRevenue}`,    color: "text-gold" },
   ];
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {stats.map((s) => (
-        <div
-          key={s.label}
-          className="rounded-xl border border-border bg-card/60 px-4 py-3 text-center"
-        >
+        <div key={s.label} className="rounded-xl border border-border bg-card/60 px-4 py-3 text-center">
           <div className={`text-2xl font-bold font-display ${s.color}`}>{s.value}</div>
-          <div className="text-xs text-muted-foreground mt-0.5 uppercase tracking-[0.15em]">
-            {s.label}
-          </div>
+          <div className="text-xs text-muted-foreground mt-0.5 uppercase tracking-[0.15em]">{s.label}</div>
         </div>
       ))}
     </div>
   );
 }
 
-// ── Main dashboard ───────────────────────────────────────────────────────────
+// ── Main dashboard ────────────────────────────────────────────────────────────
 const STATUS_FILTERS: { label: string; value: OrderStatus | "all" }[] = [
-  { label: "All", value: "all" },
-  { label: "New", value: "new" },
+  { label: "All",       value: "all" },
+  { label: "New",       value: "new" },
   { label: "Preparing", value: "preparing" },
-  { label: "Ready", value: "ready" },
+  { label: "Ready",     value: "ready" },
   { label: "Delivered", value: "delivered" },
   { label: "Cancelled", value: "cancelled" },
 ];
 
 function AdminPage() {
-  const [unlocked, setUnlocked] = useState(() => {
-    return sessionStorage.getItem("alzad_admin") === "1";
-  });
+  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("alzad_admin") === "1");
   const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
-  const [tick, setTick] = useState(0); // forces timeAgo re-render
+  const [loading, setLoading] = useState(false);
+  const [tick, setTick] = useState(0);
 
-  // Track new-order count to detect incoming orders
   const prevNewCount = useRef<number | null>(null);
 
-  const reload = useCallback(() => {
-    setOrders(getOrders());
+  const reload = useCallback(async () => {
+    setLoading(true);
+    const data = await getOrders();
+    setOrders(data);
+    setLoading(false);
   }, []);
 
-  // Play sound when a new "new" order arrives
+  // Play sound when new orders arrive
   useEffect(() => {
     const newCount = orders.filter((o) => o.status === "new").length;
     if (prevNewCount.current !== null && newCount > prevNewCount.current) {
@@ -357,7 +330,6 @@ function AdminPage() {
     if (!unlocked) return;
     reload();
     const unsub = subscribeToOrders(reload);
-    // Refresh timeAgo labels every 30s
     const interval = setInterval(() => setTick((t) => t + 1), 30_000);
     return () => {
       unsub();
@@ -377,23 +349,19 @@ function AdminPage() {
 
   if (!unlocked) return <PinGate onUnlock={unlock} />;
 
-  const filtered =
-    filter === "all" ? orders : orders.filter((o) => o.status === filter);
-
-  const activeCount = orders.filter(
-    (o) => o.status === "new" || o.status === "preparing"
-  ).length;
+  const filtered = filter === "all" ? orders : orders.filter((o) => o.status === filter);
+  const activeCount = orders.filter((o) => o.status === "new" || o.status === "preparing").length;
 
   return (
     <div className="mx-auto max-w-7xl px-4 lg:px-10 py-8 lg:py-12">
       {/* Top bar */}
       <div className="flex items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="font-display text-3xl lg:text-4xl">
-            Kitchen Dashboard
-          </h1>
+          <h1 className="font-display text-3xl lg:text-4xl">Kitchen Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {activeCount > 0
+            {loading
+              ? "Loading orders…"
+              : activeCount > 0
               ? `${activeCount} active order${activeCount > 1 ? "s" : ""} in progress`
               : "No active orders right now"}
           </p>
@@ -401,7 +369,7 @@ function AdminPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={reload}
-            className="h-9 w-9 grid place-items-center rounded-lg border border-border text-muted-foreground hover:text-gold hover:border-gold/50 transition-colors"
+            className={`h-9 w-9 grid place-items-center rounded-lg border border-border text-muted-foreground hover:text-gold hover:border-gold/50 transition-colors ${loading ? "animate-spin" : ""}`}
             title="Refresh"
           >
             <RefreshCw className="h-4 w-4" />
@@ -416,16 +384,12 @@ function AdminPage() {
         </div>
       </div>
 
-      {/* Stats */}
       <StatsBar orders={orders} />
 
       {/* Filter tabs */}
       <div className="mt-8 flex flex-wrap gap-2">
         {STATUS_FILTERS.map((f) => {
-          const count =
-            f.value === "all"
-              ? orders.length
-              : orders.filter((o) => o.status === f.value).length;
+          const count = f.value === "all" ? orders.length : orders.filter((o) => o.status === f.value).length;
           return (
             <button
               key={f.value}
@@ -437,27 +401,21 @@ function AdminPage() {
               }`}
             >
               {f.label}
-              {count > 0 && (
-                <span className="ml-1.5 opacity-70">({count})</span>
-              )}
+              {count > 0 && <span className="ml-1.5 opacity-70">({count})</span>}
             </button>
           );
         })}
       </div>
 
       {/* Orders grid */}
-      <div className="mt-6">
+      <div className="mt-6" data-tick={tick}>
         {filtered.length === 0 ? (
           <div className="text-center py-24 text-muted-foreground">
             <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-30" />
-            <p className="text-sm">No orders here yet.</p>
+            <p className="text-sm">{loading ? "Loading…" : "No orders here yet."}</p>
           </div>
         ) : (
-          <div
-            className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
-            // suppress unused tick warning — it's used to force re-render for timeAgo
-            data-tick={tick}
-          >
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((order) => (
               <OrderCard key={order.id} order={order} onStatusChange={reload} />
             ))}

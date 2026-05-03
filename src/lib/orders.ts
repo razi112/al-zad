@@ -1,4 +1,6 @@
+import { supabase } from "./supabase";
 import type { MenuItem, SizeVariant } from "@/data/menu";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 export type OrderStatus = "new" | "preparing" | "ready" | "delivered" | "cancelled";
 
@@ -13,7 +15,7 @@ export type OrderLine = {
 
 export type Order = {
   id: string;
-  placedAt: string; // ISO timestamp
+  placed_at: string; // ISO timestamp — matches Supabase column name
   status: OrderStatus;
   mode: "delivery" | "pickup";
   name: string;
@@ -25,51 +27,58 @@ export type Order = {
   total: number;
 };
 
-const STORAGE_KEY = "alzad_orders";
-const EVENT_KEY = "alzad_orders_updated";
+// ── CRUD ─────────────────────────────────────────────────────────────────────
 
-export function getOrders(): Order[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Order[]) : [];
-  } catch {
+export async function getOrders(): Promise<Order[]> {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .order("placed_at", { ascending: false });
+
+  if (error) {
+    console.error("getOrders error:", error.message);
     return [];
   }
+  return (data ?? []) as Order[];
 }
 
-export function saveOrder(order: Order): void {
-  const orders = getOrders();
-  orders.unshift(order); // newest first
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
-  // Notify same-tab listeners
-  window.dispatchEvent(new CustomEvent(EVENT_KEY));
+export async function saveOrder(order: Order): Promise<void> {
+  const { error } = await supabase.from("orders").insert([order]);
+  if (error) console.error("saveOrder error:", error.message);
 }
 
-export function updateOrderStatus(id: string, status: OrderStatus): void {
-  const orders = getOrders().map((o) => (o.id === id ? { ...o, status } : o));
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
-  window.dispatchEvent(new CustomEvent(EVENT_KEY));
+export async function updateOrderStatus(id: string, status: OrderStatus): Promise<void> {
+  const { error } = await supabase
+    .from("orders")
+    .update({ status })
+    .eq("id", id);
+  if (error) console.error("updateOrderStatus error:", error.message);
 }
 
-export function deleteOrder(id: string): void {
-  const orders = getOrders().filter((o) => o.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
-  window.dispatchEvent(new CustomEvent(EVENT_KEY));
+export async function deleteOrder(id: string): Promise<void> {
+  const { error } = await supabase.from("orders").delete().eq("id", id);
+  if (error) console.error("deleteOrder error:", error.message);
 }
+
+// ── Realtime subscription ─────────────────────────────────────────────────────
+// Returns an unsubscribe function. Calls `cb` on any INSERT / UPDATE / DELETE.
 
 export function subscribeToOrders(cb: () => void): () => void {
-  // Same-tab updates via custom event
-  window.addEventListener(EVENT_KEY, cb);
-  // Cross-tab updates via storage event
-  const onStorage = (e: StorageEvent) => {
-    if (e.key === STORAGE_KEY) cb();
-  };
-  window.addEventListener("storage", onStorage);
+  const channel: RealtimeChannel = supabase
+    .channel("orders-changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "orders" },
+      () => cb()
+    )
+    .subscribe();
+
   return () => {
-    window.removeEventListener(EVENT_KEY, cb);
-    window.removeEventListener("storage", onStorage);
+    supabase.removeChannel(channel);
   };
 }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 export function generateOrderId(): string {
   return `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;

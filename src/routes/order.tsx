@@ -75,16 +75,15 @@ function OrderPage() {
       return n;
     });
 
-  const placeOrder = (e: React.FormEvent) => {
+  const placeOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (lines.length === 0) {
       toast.error("Your cart is empty");
       return;
     }
-    // Persist order to localStorage for admin dashboard
-    saveOrder({
+    await saveOrder({
       id: generateOrderId(),
-      placedAt: new Date().toISOString(),
+      placed_at: new Date().toISOString(),
       status: "new",
       mode,
       name: nameRef.current?.value ?? "",
