@@ -4,13 +4,13 @@ import {
   getOrders,
   updateOrderStatus,
   deleteOrder,
-  subscribeToOrders,
   type Order,
   type OrderStatus,
   STATUS_LABELS,
   STATUS_COLORS,
   STATUS_NEXT,
 } from "@/lib/orders";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,6 +30,8 @@ import {
   Trash2,
   BellRing,
   X,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -234,6 +236,7 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: ()
   const advance = async () => {
     if (nextStatus) {
       await updateOrderStatus(order.id, nextStatus);
+      // Realtime UPDATE event will update the UI automatically
       onStatusChange();
     }
   };
@@ -246,6 +249,7 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: ()
   const remove = async () => {
     if (window.confirm(`Delete order ${order.id}? This cannot be undone.`)) {
       await deleteOrder(order.id);
+      // Realtime DELETE event will remove it automatically
       onStatusChange();
     }
   };
@@ -405,6 +409,7 @@ function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [tick, setTick] = useState(0);
   const [notifs, setNotifs] = useState<InAppNotif[]>([]);
+  const [realtimeStatus, setRealtimeStatus] = useState<"connecting" | "connected" | "error">("connecting");
 
   // Track known order IDs to detect genuinely new ones
   const knownIds = useRef<Set<string>>(new Set());
@@ -414,48 +419,89 @@ function AdminPage() {
     setNotifs((prev) =>
       prev.map((n) => (n.id === id ? { ...n, visible: false } : n))
     );
-    // Remove from DOM after fade-out
     setTimeout(() => setNotifs((prev) => prev.filter((n) => n.id !== id)), 600);
   }, []);
 
   const reload = useCallback(async () => {
     setLoading(true);
     const data = await getOrders();
-
-    if (isFirstLoad.current) {
-      // Seed known IDs on first load — don't notify for existing orders
-      data.forEach((o) => knownIds.current.add(o.id));
-      isFirstLoad.current = false;
-    } else {
-      // Find orders we haven't seen before with status "new"
-      const incoming = data.filter(
-        (o) => o.status === "new" && !knownIds.current.has(o.id)
-      );
-      incoming.forEach((o) => {
-        knownIds.current.add(o.id);
-        playNewOrderSound();
-        sendBrowserNotification(o);
-        const notifId = `notif-${o.id}`;
-        setNotifs((prev) => [...prev, { id: notifId, order: o, visible: true }]);
-      });
-    }
-
     setOrders(data);
     setLoading(false);
   }, []);
 
   useEffect(() => {
     if (!unlocked) return;
-    reload();
-    const unsub = subscribeToOrders(reload);
+
+    // Initial load — seed known IDs, no notifications
+    (async () => {
+      setLoading(true);
+      const data = await getOrders();
+      data.forEach((o) => knownIds.current.add(o.id));
+      isFirstLoad.current = false;
+      setOrders(data);
+      setLoading(false);
+    })();
+
+    // Realtime: handle payload directly — no full refetch needed
+    const channel = supabase
+      .channel("orders-realtime-admin")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "orders" },
+        (payload) => {
+          const newOrder = payload.new as Order;
+          console.log("[Realtime] INSERT:", newOrder.id);
+
+          // Add to orders list immediately — no page refresh
+          setOrders((prev) => {
+            if (prev.find((o) => o.id === newOrder.id)) return prev;
+            return [newOrder, ...prev];
+          });
+
+          // Notify only if genuinely new
+          if (!knownIds.current.has(newOrder.id)) {
+            knownIds.current.add(newOrder.id);
+            playNewOrderSound();
+            sendBrowserNotification(newOrder);
+            const notifId = `notif-${newOrder.id}`;
+            setNotifs((prev) => [...prev, { id: notifId, order: newOrder, visible: true }]);
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "orders" },
+        (payload) => {
+          const updated = payload.new as Order;
+          console.log("[Realtime] UPDATE:", updated.id, updated.status);
+          setOrders((prev) =>
+            prev.map((o) => (o.id === updated.id ? updated : o))
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "orders" },
+        (payload) => {
+          const deleted = payload.old as { id: string };
+          console.log("[Realtime] DELETE:", deleted.id);
+          setOrders((prev) => prev.filter((o) => o.id !== deleted.id));
+        }
+      )
+      .subscribe((status, err) => {
+        console.log("[Realtime] status:", status, err);
+        if (status === "SUBSCRIBED") setRealtimeStatus("connected");
+        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setRealtimeStatus("error");
+        else setRealtimeStatus("connecting");
+      });
+
     const interval = setInterval(() => setTick((t) => t + 1), 30_000);
     return () => {
-      unsub();
+      supabase.removeChannel(channel);
       clearInterval(interval);
     };
-  }, [unlocked, reload]);
+  }, [unlocked]);
 
-  // Request browser notification permission when admin unlocks
   useEffect(() => {
     if (unlocked && "Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
@@ -472,6 +518,7 @@ function AdminPage() {
     setUnlocked(false);
     isFirstLoad.current = true;
     knownIds.current.clear();
+    setRealtimeStatus("connecting");
   };
 
   if (!unlocked) return <PinGate onUnlock={unlock} />;
@@ -498,6 +545,20 @@ function AdminPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Realtime status pill */}
+            <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border ${
+              realtimeStatus === "connected"
+                ? "border-green-500/30 bg-green-500/10 text-green-400"
+                : realtimeStatus === "error"
+                ? "border-destructive/30 bg-destructive/10 text-destructive"
+                : "border-border bg-muted/40 text-muted-foreground"
+            }`}>
+              {realtimeStatus === "connected"
+                ? <><Wifi className="h-3 w-3" /> Live</>
+                : realtimeStatus === "error"
+                ? <><WifiOff className="h-3 w-3" /> Disconnected</>
+                : <><RefreshCw className="h-3 w-3 animate-spin" /> Connecting…</>}
+            </div>
             <button
               onClick={reload}
               className={`h-9 w-9 grid place-items-center rounded-lg border border-border text-muted-foreground hover:text-gold hover:border-gold/50 transition-colors ${loading ? "animate-spin" : ""}`}

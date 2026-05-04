@@ -159,7 +159,7 @@ function OrderPage() {
       toast.error("Delivery is not available at your location.");
       return;
     }
-    // If still checking, wait
+    // If delivery and still checking location, wait
     if (mode === "delivery" && location.status === "checking") {
       toast.error("Still checking your location, please wait a moment.");
       return;
@@ -169,7 +169,7 @@ function OrderPage() {
     const distanceKm =
       location.status === "ok" ? parseFloat(location.distanceKm.toFixed(2)) : null;
 
-    await saveOrder({
+    const result = await saveOrder({
       id: generateOrderId(),
       placed_at: new Date().toISOString(),
       status: "new",
@@ -184,6 +184,12 @@ function OrderPage() {
       total,
     });
     setSubmitting(false);
+
+    if (!result.success) {
+      toast.error(`Failed to place order: ${result.error ?? "Unknown error"}. Please call us directly.`);
+      return;
+    }
+
     setPlaced(true);
     toast.success("Order placed! We'll text you when it's ready.");
   };
@@ -346,11 +352,14 @@ function OrderPage() {
               variant="gold"
               size="lg"
               className="w-full mt-2"
-              disabled={deliveryBlocked || submitting || location.status === "checking"}
+              disabled={
+                submitting ||
+                (mode === "delivery" && (deliveryBlocked || location.status === "checking"))
+              }
             >
               {submitting ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Placing order…</>
-              ) : location.status === "checking" ? (
+              ) : mode === "delivery" && location.status === "checking" ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Checking location…</>
               ) : (
                 "Place Order"

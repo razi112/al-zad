@@ -43,9 +43,30 @@ export async function getOrders(): Promise<Order[]> {
   return (data ?? []) as Order[];
 }
 
-export async function saveOrder(order: Order): Promise<void> {
-  const { error } = await supabase.from("orders").insert([order]);
-  if (error) console.error("saveOrder error:", error.message);
+export async function saveOrder(order: Order): Promise<{ success: boolean; error?: string }> {
+  // Strip undefined/null optional fields so missing columns don't cause errors
+  const payload: Record<string, unknown> = {
+    id: order.id,
+    placed_at: order.placed_at,
+    status: order.status,
+    mode: order.mode,
+    name: order.name,
+    phone: order.phone,
+    lines: order.lines,
+    subtotal: order.subtotal,
+    fee: order.fee,
+    total: order.total,
+  };
+  if (order.address != null) payload.address = order.address;
+  if (order.distance_km != null) payload.distance_km = order.distance_km;
+
+  const { error } = await supabase.from("orders").insert([payload]);
+  if (error) {
+    console.error("saveOrder error:", error.message, error);
+    return { success: false, error: error.message };
+  }
+  console.log("[saveOrder] inserted order:", order.id);
+  return { success: true };
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus): Promise<void> {
