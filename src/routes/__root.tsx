@@ -47,7 +47,7 @@ function RootComponent() {
   return (
     <>
       <Header />
-      <main className="pt-20 pb-20 lg:pb-0">
+      <main className="pt-20 pb-24 lg:pb-0">
         <Outlet />
       </main>
       <Footer />

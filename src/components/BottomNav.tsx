@@ -22,7 +22,7 @@ export function BottomNav() {
             <Link
               key={to}
               to={to}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors ${
+              className={`relative flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors ${
                 active ? "text-gold" : "text-muted-foreground hover:text-foreground"
               }`}
             >

@@ -31,20 +31,22 @@ function MenuPage() {
         </p>
       </header>
 
-      <div className="mt-10 sm:mt-14 flex flex-wrap justify-center gap-2 sm:gap-3">
-        {categories.map((c) => (
-          <button
-            key={c}
-            onClick={() => setActive(c)}
-            className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs uppercase tracking-[0.2em] border transition-all ${
-              active === c
-                ? "bg-gradient-gold text-primary-foreground border-transparent shadow-gold"
-                : "border-border text-muted-foreground hover:text-gold hover:border-gold/60"
-            }`}
-          >
-            {c}
-          </button>
-        ))}
+      <div className="mt-10 sm:mt-14 -mx-4 sm:mx-0 px-4 sm:px-0 overflow-x-auto scrollbar-none">
+        <div className="flex gap-2 sm:gap-3 sm:flex-wrap sm:justify-center w-max sm:w-auto pb-1">
+          {categories.map((c) => (
+            <button
+              key={c}
+              onClick={() => setActive(c)}
+              className={`whitespace-nowrap px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs uppercase tracking-[0.2em] border transition-all ${
+                active === c
+                  ? "bg-gradient-gold text-primary-foreground border-transparent shadow-gold"
+                  : "border-border text-muted-foreground hover:text-gold hover:border-gold/60"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mt-10 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
@@ -67,28 +69,28 @@ function Card({ item }: { item: MenuItem }) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
         />
         {item.badge && (
-          <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-gradient-gold text-primary-foreground text-[10px] uppercase tracking-[0.2em] font-semibold">
+          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-gradient-gold text-primary-foreground text-[10px] uppercase tracking-[0.2em] font-semibold">
             {item.badge}
           </div>
         )}
-        <div className="absolute top-4 right-4 px-3 py-1 rounded-full glass border border-border text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full glass border border-border text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
           {item.category}
         </div>
       </div>
-      <div className="p-6 flex flex-col flex-1">
-        <div className="flex items-baseline justify-between gap-4">
-          <h3 className="font-display text-xl">{item.name}</h3>
-          <span className="text-gold font-semibold whitespace-nowrap">
+      <div className="p-4 sm:p-6 flex flex-col flex-1">
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="font-display text-lg sm:text-xl">{item.name}</h3>
+          <span className="text-gold font-semibold whitespace-nowrap shrink-0">
             {item.sizes ? `from ₹${item.price}` : `₹${item.price}`}
           </span>
         </div>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed flex-1">{item.description}</p>
 
-        {/* Size pricing table */}
+        {/* Size pricing table — scrollable on tiny screens */}
         {item.sizes && (
-          <div className="mt-4 grid grid-cols-4 gap-1.5">
+          <div className="mt-4 grid grid-cols-4 gap-1.5 overflow-x-auto">
             {item.sizes.map((s) => (
-              <div key={s.label} className="rounded-lg border border-border/70 bg-background/40 p-2 text-center">
+              <div key={s.label} className="rounded-lg border border-border/70 bg-background/40 p-2 text-center min-w-[56px]">
                 <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{s.label}</div>
                 <div className="text-xs font-semibold text-gold mt-0.5">₹{s.price}</div>
               </div>
@@ -96,7 +98,7 @@ function Card({ item }: { item: MenuItem }) {
           </div>
         )}
 
-        <Button asChild variant="outlineGold" size="sm" className="mt-5 self-start">
+        <Button asChild variant="outlineGold" size="sm" className="mt-4 sm:mt-5 self-start">
           <Link to="/order"><Plus className="h-3.5 w-3.5" /> Add to order</Link>
         </Button>
       </div>

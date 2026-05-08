@@ -112,7 +112,7 @@ function NewOrderBanner({ notif, onDismiss }: { notif: InAppNotif; onDismiss: (i
   return (
     <div
       className={`
-        flex items-start gap-3 w-full max-w-sm rounded-2xl border border-gold/40
+        flex items-start gap-3 w-[calc(100vw-2rem)] max-w-sm rounded-2xl border border-gold/40
         bg-card shadow-elev px-4 py-4 transition-all duration-500
         ${notif.visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-3 pointer-events-none"}
       `}
@@ -161,7 +161,7 @@ function NewOrderBanner({ notif, onDismiss }: { notif: InAppNotif; onDismiss: (i
 function NotificationStack({ notifs, onDismiss }: { notifs: InAppNotif[]; onDismiss: (id: string) => void }) {
   if (notifs.length === 0) return null;
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 items-end">
+    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 items-end safe-top">
       {notifs.map((n) => (
         <NewOrderBanner key={n.id} notif={n} onDismiss={onDismiss} />
       ))}
@@ -259,30 +259,30 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: ()
   return (
     <article className="rounded-2xl border border-border bg-card overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border/60">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-gold/10 border border-gold/30 grid place-items-center">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border/60">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="h-9 w-9 shrink-0 rounded-xl bg-gold/10 border border-gold/30 grid place-items-center">
             <Icon className="h-4 w-4 text-gold" />
           </div>
-          <div>
-            <div className="font-semibold text-sm">{order.id}</div>
+          <div className="min-w-0">
+            <div className="font-semibold text-sm truncate">{order.id}</div>
             <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {formatTime(order.placed_at)} · {timeAgo(order.placed_at)}
+              <Clock className="h-3 w-3 shrink-0" />
+              <span className="truncate">{formatTime(order.placed_at)} · {timeAgo(order.placed_at)}</span>
             </div>
           </div>
         </div>
-        <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-[0.15em] font-semibold border ${STATUS_COLORS[order.status]}`}>
+        <span className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] uppercase tracking-[0.12em] font-semibold border ${STATUS_COLORS[order.status]}`}>
           {STATUS_LABELS[order.status]}
         </span>
       </div>
 
       {/* Customer info */}
-      <div className="px-5 py-4 grid gap-2 border-b border-border/60">
+      <div className="px-4 py-3 grid gap-2 border-b border-border/60">
         <div className="flex items-center gap-2 text-sm">
           <User className="h-4 w-4 text-gold shrink-0" />
-          <span className="font-medium">{order.name}</span>
-          <span className="ml-auto text-xs px-2 py-0.5 rounded-full border border-border capitalize text-muted-foreground">
+          <span className="font-medium truncate">{order.name}</span>
+          <span className="ml-auto shrink-0 text-xs px-2 py-0.5 rounded-full border border-border capitalize text-muted-foreground">
             {order.mode === "delivery" ? (
               <span className="flex items-center gap-1"><Bike className="h-3 w-3" /> Delivery</span>
             ) : (
@@ -297,7 +297,7 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: ()
         {order.address && (
           <div className="flex items-start gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-gold" />
-            <span>
+            <span className="break-words">
               {order.address}
               {order.distance_km != null && (
                 <span className="ml-2 text-xs text-gold/70">({order.distance_km.toFixed(1)} km)</span>
@@ -308,31 +308,31 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: ()
       </div>
 
       {/* Order lines */}
-      <div className="px-5 py-4 space-y-2 border-b border-border/60">
+      <div className="px-4 py-3 space-y-2 border-b border-border/60">
         {order.lines.map((l, i) => (
           <div key={i} className="flex items-baseline justify-between gap-3 text-sm">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <span className="font-medium">{l.itemName}</span>
               {l.sizeLabel && (
                 <span className="ml-1.5 text-xs text-muted-foreground">({l.sizeLabel})</span>
               )}
               <span className="text-xs text-muted-foreground ml-1.5">× {l.qty}</span>
             </div>
-            <span className="text-gold font-semibold whitespace-nowrap">₹{linePrice(l)}</span>
+            <span className="text-gold font-semibold whitespace-nowrap shrink-0">₹{linePrice(l)}</span>
           </div>
         ))}
       </div>
 
       {/* Totals + actions */}
-      <div className="px-5 py-4 flex items-center justify-between gap-4">
+      <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-3">
         <div className="text-sm">
           <span className="text-muted-foreground">Total </span>
           <span className="text-gold font-bold text-base">₹{order.total}</span>
           {order.fee > 0 && (
-            <span className="text-xs text-muted-foreground ml-1">(incl. ₹{order.fee} delivery)</span>
+            <span className="text-xs text-muted-foreground ml-1">(+₹{order.fee} delivery)</span>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 ml-auto">
           {order.status !== "delivered" && order.status !== "cancelled" && (
             <button
               onClick={cancel}
@@ -350,7 +350,7 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: ()
             <Trash2 className="h-4 w-4" />
           </button>
           {nextStatus && (
-            <Button onClick={advance} variant="gold" size="sm" className="gap-1.5">
+            <Button onClick={advance} variant="gold" size="sm" className="gap-1 text-xs px-3">
               Mark {STATUS_LABELS[nextStatus]}
               <ChevronRight className="h-3.5 w-3.5" />
             </Button>
@@ -382,10 +382,15 @@ function StatsBar({ orders }: { orders: Order[] }) {
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-      {stats.map((s) => (
-        <div key={s.label} className="rounded-xl border border-border bg-card/60 px-4 py-3 text-center">
+      {stats.map((s, i) => (
+        <div
+          key={s.label}
+          className={`rounded-xl border border-border bg-card/60 px-4 py-3 text-center
+            ${i === stats.length - 1 ? "col-span-2 sm:col-span-1" : ""}
+          `}
+        >
           <div className={`text-2xl font-bold font-display ${s.color}`}>{s.value}</div>
-          <div className="text-xs text-muted-foreground mt-0.5 uppercase tracking-[0.15em]">{s.label}</div>
+          <div className="text-xs text-muted-foreground mt-0.5 uppercase tracking-[0.15em] truncate">{s.label}</div>
         </div>
       ))}
     </div>
@@ -402,6 +407,8 @@ const STATUS_FILTERS: { label: string; value: OrderStatus | "all" }[] = [
   { label: "Cancelled", value: "cancelled" },
 ];
 
+const AUTO_REFRESH_INTERVAL = 5; // seconds
+
 function AdminPage() {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("alzad_admin") === "1");
   const [orders, setOrders] = useState<Order[]>([]);
@@ -410,6 +417,8 @@ function AdminPage() {
   const [tick, setTick] = useState(0);
   const [notifs, setNotifs] = useState<InAppNotif[]>([]);
   const [realtimeStatus, setRealtimeStatus] = useState<"connecting" | "connected" | "error">("connecting");
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [countdown, setCountdown] = useState(AUTO_REFRESH_INTERVAL);
 
   // Track known order IDs to detect genuinely new ones
   const knownIds = useRef<Set<string>>(new Set());
@@ -508,6 +517,25 @@ function AdminPage() {
     }
   }, [unlocked]);
 
+  // Auto-refresh every 5 seconds with countdown
+  useEffect(() => {
+    if (!unlocked || !autoRefresh) {
+      setCountdown(AUTO_REFRESH_INTERVAL);
+      return;
+    }
+    setCountdown(AUTO_REFRESH_INTERVAL);
+    const countdownInterval = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          reload();
+          return AUTO_REFRESH_INTERVAL;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(countdownInterval);
+  }, [unlocked, autoRefresh, reload]);
+
   const unlock = () => {
     sessionStorage.setItem("alzad_admin", "1");
     setUnlocked(true);
@@ -531,11 +559,11 @@ function AdminPage() {
       {/* Notification stack */}
       <NotificationStack notifs={notifs} onDismiss={dismissNotif} />
 
-      <div className="mx-auto max-w-7xl px-4 lg:px-10 py-8 lg:py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-6 lg:py-12 pb-24 sm:pb-12">
         {/* Top bar */}
-        <div className="flex items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl">Kitchen Dashboard</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
+          <div className="min-w-0">
+            <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl truncate">Kitchen Dashboard</h1>
             <p className="text-sm text-muted-foreground mt-1">
               {loading
                 ? "Loading orders…"
@@ -544,9 +572,9 @@ function AdminPage() {
                 : "No active orders right now"}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Realtime status pill */}
-            <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border ${
+            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border ${
               realtimeStatus === "connected"
                 ? "border-green-500/30 bg-green-500/10 text-green-400"
                 : realtimeStatus === "error"
@@ -556,9 +584,23 @@ function AdminPage() {
               {realtimeStatus === "connected"
                 ? <><Wifi className="h-3 w-3" /> Live</>
                 : realtimeStatus === "error"
-                ? <><WifiOff className="h-3 w-3" /> Disconnected</>
+                ? <><WifiOff className="h-3 w-3" /> Offline</>
                 : <><RefreshCw className="h-3 w-3 animate-spin" /> Connecting…</>}
             </div>
+            {/* Auto-refresh toggle */}
+            <button
+              onClick={() => setAutoRefresh((v) => !v)}
+              className={`flex items-center gap-1.5 h-9 px-3 rounded-lg border text-xs font-medium transition-colors ${
+                autoRefresh
+                  ? "border-gold/40 bg-gold/10 text-gold hover:bg-gold/20"
+                  : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"
+              }`}
+              title={autoRefresh ? "Disable auto-refresh" : "Enable auto-refresh"}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${autoRefresh ? "animate-spin [animation-duration:3s]" : ""}`} />
+              <span className="hidden xs:inline">{autoRefresh ? `Auto ${countdown}s` : "Auto Off"}</span>
+              <span className="xs:hidden">{autoRefresh ? countdown : "—"}</span>
+            </button>
             <button
               onClick={reload}
               className={`h-9 w-9 grid place-items-center rounded-lg border border-border text-muted-foreground hover:text-gold hover:border-gold/50 transition-colors ${loading ? "animate-spin" : ""}`}
@@ -578,31 +620,33 @@ function AdminPage() {
 
         <StatsBar orders={orders} />
 
-        {/* Filter tabs */}
-        <div className="mt-8 flex flex-wrap gap-2">
-          {STATUS_FILTERS.map((f) => {
-            const count = f.value === "all" ? orders.length : orders.filter((o) => o.status === f.value).length;
-            return (
-              <button
-                key={f.value}
-                onClick={() => setFilter(f.value)}
-                className={`px-4 py-1.5 rounded-full text-xs uppercase tracking-[0.18em] border transition-all ${
-                  filter === f.value
-                    ? "bg-gradient-gold text-primary-foreground border-transparent shadow-gold"
-                    : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"
-                }`}
-              >
-                {f.label}
-                {count > 0 && <span className="ml-1.5 opacity-70">({count})</span>}
-              </button>
-            );
-          })}
+        {/* Filter tabs — horizontally scrollable on mobile */}
+        <div className="mt-6 sm:mt-8 -mx-4 sm:mx-0 px-4 sm:px-0 overflow-x-auto scrollbar-none">
+          <div className="flex gap-2 w-max sm:w-auto sm:flex-wrap pb-1">
+            {STATUS_FILTERS.map((f) => {
+              const count = f.value === "all" ? orders.length : orders.filter((o) => o.status === f.value).length;
+              return (
+                <button
+                  key={f.value}
+                  onClick={() => setFilter(f.value)}
+                  className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs uppercase tracking-[0.18em] border transition-all ${
+                    filter === f.value
+                      ? "bg-gradient-gold text-primary-foreground border-transparent shadow-gold"
+                      : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"
+                  }`}
+                >
+                  {f.label}
+                  {count > 0 && <span className="ml-1.5 opacity-70">({count})</span>}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Orders grid */}
-        <div className="mt-6" data-tick={tick}>
+        <div className="mt-5" data-tick={tick}>
           {filtered.length === 0 ? (
-            <div className="text-center py-24 text-muted-foreground">
+            <div className="text-center py-20 text-muted-foreground">
               <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-30" />
               <p className="text-sm">{loading ? "Loading…" : "No orders here yet."}</p>
             </div>

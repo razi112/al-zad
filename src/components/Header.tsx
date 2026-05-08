@@ -30,11 +30,11 @@ export function Header() {
       }`}
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-10 h-20 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3 group">
-          <Logo className="h-12 w-12" />
-          <div className="leading-tight">
-            <div className="font-display text-xl tracking-wide text-gradient-gold">AL ZAD</div>
-            <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+        <Link to="/" className="flex items-center gap-2 sm:gap-3 group min-w-0">
+          <Logo className="h-10 w-10 sm:h-12 sm:w-12 shrink-0" />
+          <div className="leading-tight min-w-0">
+            <div className="font-display text-lg sm:text-xl tracking-wide text-gradient-gold">AL ZAD</div>
+            <div className="hidden sm:block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
               Quality — not compromised
             </div>
           </div>

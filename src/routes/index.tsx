@@ -112,7 +112,7 @@ function Index() {
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/40 to-transparent" />
         </div>
 
-        <div className="relative mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-10 py-28 sm:py-24">
+        <div className="relative mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-10 pt-16 pb-16 sm:py-24">
           <div className="max-w-2xl animate-fade-in-up">
             <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full border border-gold/40 bg-gold/5 text-gold text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em]">
               <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Open Flame Kitchen
@@ -121,7 +121,7 @@ function Index() {
               Where every flame
               <span className="block text-gradient-gold italic">tells a story.</span>
             </h1>
-            <p className="mt-4 sm:mt-6 text-base sm:text-lg text-muted-foreground max-w-xl leading-relaxed">
+            <p className="mt-4 sm:mt-6 text-sm sm:text-base sm:text-lg text-muted-foreground max-w-xl leading-relaxed">
               Slow-marinated for 24 hours, kissed by charcoal, served with reverence.
               At AL ZAD, quality isn't a promise — it's the only standard.
             </p>

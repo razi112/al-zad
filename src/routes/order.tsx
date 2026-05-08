@@ -196,14 +196,14 @@ function OrderPage() {
 
   if (placed) {
     return (
-      <div className="mx-auto max-w-2xl px-6 py-32 text-center">
-        <CheckCircle2 className="h-16 w-16 text-gold mx-auto" />
-        <h1 className="mt-6 font-display text-4xl">Order received</h1>
-        <p className="mt-3 text-muted-foreground">
+      <div className="mx-auto max-w-2xl px-4 sm:px-6 py-24 sm:py-32 text-center">
+        <CheckCircle2 className="h-14 w-14 sm:h-16 sm:w-16 text-gold mx-auto" />
+        <h1 className="mt-6 font-display text-3xl sm:text-4xl">Order received</h1>
+        <p className="mt-3 text-sm sm:text-base text-muted-foreground">
           Thank you. Your feast is on the flame.
           {mode === "delivery" ? " Estimated delivery: 35–45 min." : " Pickup ready in ~20 min."}
         </p>
-        <p className="mt-2 text-gold">Total: ₹{total}</p>
+        <p className="mt-2 text-gold font-semibold">Total: ₹{total}</p>
         <Button variant="gold" className="mt-8" onClick={() => { setPlaced(false); setCart({}); }}>
           Place another order
         </Button>
@@ -215,71 +215,13 @@ function OrderPage() {
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-16 sm:py-20 lg:py-24">
       <header className="text-center max-w-2xl mx-auto">
         <div className="text-gold text-xs uppercase tracking-[0.3em] mb-3">Order Online</div>
-        <h1 className="font-display text-4xl sm:text-5xl">Build your feast.</h1>
+        <h1 className="font-display text-3xl sm:text-4xl sm:text-5xl">Build your feast.</h1>
       </header>
 
-      <div className="mt-10 sm:mt-14 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
-        {/* Items */}
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-          {menu.map((m) => {
-            const activeSizeLabel = selectedSize[m.id];
-            const activeSize = m.sizes?.find((s) => s.label === activeSizeLabel);
-            const displayPrice = activeSize?.price ?? m.price;
-            const activeKey = cartKey(m.id, activeSizeLabel);
-
-            return (
-              <div key={m.id} className="rounded-2xl border border-border bg-card overflow-hidden flex flex-col">
-                <div className="flex">
-                  <img src={m.image} alt={m.name} loading="lazy" className="w-28 sm:w-32 h-full object-cover shrink-0" />
-                  <div className="p-3 sm:p-4 flex flex-col flex-1 min-w-0">
-                    <h3 className="font-display text-base sm:text-lg leading-tight">{m.name}</h3>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>
-                    <div className="mt-auto pt-3 flex items-center justify-between gap-2">
-                      <span className="text-gold font-semibold text-sm sm:text-base">₹{displayPrice}</span>
-                      {cart[activeKey] ? (
-                        <div className="flex items-center gap-1.5 sm:gap-2">
-                          <button onClick={() => sub(activeKey)} className="h-7 w-7 sm:h-8 sm:w-8 grid place-items-center rounded-full border border-border hover:border-gold hover:text-gold">
-                            <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                          </button>
-                          <span className="w-5 text-center text-sm">{cart[activeKey]}</span>
-                          <button onClick={() => add(m.id, activeSizeLabel)} className="h-7 w-7 sm:h-8 sm:w-8 grid place-items-center rounded-full bg-gradient-gold text-primary-foreground">
-                            <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <Button onClick={() => add(m.id, activeSizeLabel)} variant="outlineGold" size="sm" className="text-xs px-2.5 sm:px-3">
-                          <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Add
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Size selector */}
-                {m.sizes && (
-                  <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 flex gap-1.5 sm:gap-2 flex-wrap border-t border-border/50 mt-1">
-                    {m.sizes.map((s) => (
-                      <button
-                        key={s.label}
-                        onClick={() => setSelectedSize((prev) => ({ ...prev, [m.id]: s.label }))}
-                        className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                          activeSizeLabel === s.label
-                            ? "border-gold bg-gold/10 text-gold"
-                            : "border-border text-muted-foreground hover:border-gold/50"
-                        }`}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Cart */}
-        <aside className="lg:sticky lg:top-28 self-start rounded-2xl border border-border bg-card/70 p-5 sm:p-6">
+      {/* On mobile: cart first (top), items below. On lg: items left, cart right sticky */}
+      <div className="mt-10 sm:mt-14 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10">
+        {/* Cart — shown first on mobile via order-first, pushed right on lg */}
+        <aside className="order-first lg:order-last lg:col-start-3 lg:row-start-1 lg:sticky lg:top-28 self-start rounded-2xl border border-border bg-card/70 p-4 sm:p-6">
           <h2 className="font-display text-xl sm:text-2xl flex items-center gap-2">
             <ShoppingBag className="h-5 w-5 text-gold" /> Your Order
           </h2>
@@ -296,7 +238,7 @@ function OrderPage() {
                       {l.size ? `${l.size.label} · ` : ""}{l.qty} × ₹{l.size?.price ?? l.item.price}
                     </div>
                   </div>
-                  <span className="text-gold font-semibold whitespace-nowrap">₹{l.qty * (l.size?.price ?? l.item.price)}</span>
+                  <span className="text-gold font-semibold whitespace-nowrap shrink-0">₹{l.qty * (l.size?.price ?? l.item.price)}</span>
                   <button onClick={() => remove(l.key)} className="text-muted-foreground hover:text-destructive shrink-0">
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -391,6 +333,65 @@ function OrderPage() {
             </a>
           </div>
         </aside>
+
+        {/* Items — 1 col on mobile, 2 col on sm+ */}
+        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+          {menu.map((m) => {
+            const activeSizeLabel = selectedSize[m.id];
+            const activeSize = m.sizes?.find((s) => s.label === activeSizeLabel);
+            const displayPrice = activeSize?.price ?? m.price;
+            const activeKey = cartKey(m.id, activeSizeLabel);
+
+            return (
+              <div key={m.id} className="rounded-2xl border border-border bg-card overflow-hidden flex flex-col">
+                <div className="flex">
+                  <img src={m.image} alt={m.name} loading="lazy" className="w-28 sm:w-32 h-full object-cover shrink-0" />
+                  <div className="p-3 sm:p-4 flex flex-col flex-1 min-w-0">
+                    <h3 className="font-display text-base sm:text-lg leading-tight">{m.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>
+                    <div className="mt-auto pt-3 flex items-center justify-between gap-2">
+                      <span className="text-gold font-semibold text-sm sm:text-base">₹{displayPrice}</span>
+                      {cart[activeKey] ? (
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <button onClick={() => sub(activeKey)} className="h-7 w-7 sm:h-8 sm:w-8 grid place-items-center rounded-full border border-border hover:border-gold hover:text-gold">
+                            <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                          </button>
+                          <span className="w-5 text-center text-sm">{cart[activeKey]}</span>
+                          <button onClick={() => add(m.id, activeSizeLabel)} className="h-7 w-7 sm:h-8 sm:w-8 grid place-items-center rounded-full bg-gradient-gold text-primary-foreground">
+                            <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <Button onClick={() => add(m.id, activeSizeLabel)} variant="outlineGold" size="sm" className="text-xs px-2.5 sm:px-3">
+                          <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Add
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Size selector */}
+                {m.sizes && (
+                  <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 flex gap-1.5 sm:gap-2 flex-wrap border-t border-border/50 mt-1">
+                    {m.sizes.map((s) => (
+                      <button
+                        key={s.label}
+                        onClick={() => setSelectedSize((prev) => ({ ...prev, [m.id]: s.label }))}
+                        className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                          activeSizeLabel === s.label
+                            ? "border-gold bg-gold/10 text-gold"
+                            : "border-border text-muted-foreground hover:border-gold/50"
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -151,27 +151,31 @@ function GalleryPage() {
         </header>
 
         {/* Mobile: simple 2-col grid, no spans. Tablet+: masonry with spans */}
-        <div className="mt-10 sm:mt-16 grid grid-cols-2 md:grid-cols-4 auto-rows-[160px] sm:auto-rows-[180px] md:auto-rows-[220px] gap-3 sm:gap-4">
-          {images.map((img, i) => (
-            <figure
-              key={i}
-              className={`relative overflow-hidden rounded-xl sm:rounded-2xl border border-border group cursor-pointer ${
-                // Only apply spans on md+ to avoid broken layout on mobile
-                img.span ? `md:${img.span}` : ""
-              }`}
-              onClick={() => setSelected(img)}
-            >
-              <img
-                src={img.src}
-                alt={img.alt}
-                loading="lazy"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3 sm:p-4">
-                <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-gold">{img.alt}</span>
-              </div>
-            </figure>
-          ))}
+        <div className="mt-10 sm:mt-16 grid grid-cols-2 md:grid-cols-4 auto-rows-[140px] sm:auto-rows-[180px] md:auto-rows-[220px] gap-3 sm:gap-4">
+          {images.map((img, i) => {
+            // Parse span classes and apply only at md+
+            const mdSpan = img.span
+              .split(" ")
+              .map((cls) => `md:${cls}`)
+              .join(" ");
+            return (
+              <figure
+                key={i}
+                className={`relative overflow-hidden rounded-xl sm:rounded-2xl border border-border group cursor-pointer ${mdSpan}`}
+                onClick={() => setSelected(img)}
+              >
+                <img
+                  src={img.src}
+                  alt={img.alt}
+                  loading="lazy"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3 sm:p-4">
+                  <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-gold">{img.alt}</span>
+                </div>
+              </figure>
+            );
+          })}
         </div>
       </div>
 
